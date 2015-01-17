@@ -1,0 +1,4 @@
+# Configuration for production env
+# Host and port is asigned by Openshift.
+host: <%= ENV['OPENSHIFT_SPRESS_IP'] %>
+port: <%= ENV['OPENSHIFT_SPRESS_PORT'] %>

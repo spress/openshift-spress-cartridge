@@ -1,0 +1,157 @@
+#!/bin/bash -e
+
+source $OPENSHIFT_CARTRIDGE_SDK_BASH
+source $OPENSHIFT_SPRESS_DIR/lib/util
+source ${OPENSHIFT_SPRESS_DIR}/lib/php_context
+
+cartridge_type="spress"
+
+NGINX_CFG_FILE=$OPENSHIFT_SPRESS_DIR/configuration/etc/nginx.conf
+NGINX_PID_FILE=$OPENSHIFT_SPRESS_DIR/run/nginx.pid
+PHP_CFG_FILE=$OPENSHIFT_SPRESS_DIR/configuration/etc/php-fpm.conf
+PHP_PID_FILE=$OPENSHIFT_SPRESS_DIR/run/php-fpm.pid
+
+
+function isrunning() {
+  # Check for running Spress
+  pid=$(ps -ef | grep "[s]press " | awk '{print $2}')
+  if [ "$pid" != "" ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function _start_spress() {
+  cd $OPENSHIFT_REPO_DIR/www
+
+  ${OPENSHIFT_SPRESS_DIR}/spress.phar site:build --env=prod --server > $OPENSHIFT_SPRESS_LOG_DIR/spress_error.log 2>&1 &
+}
+
+function _nginx() {
+  LD_LIBRARY_PATH=$OPENSHIFT_SPRESS_DIR $OPENSHIFT_SPRESS_DIR/usr/sbin/nginx "$@" >> $OPENSHIFT_SPRESS_LOG_DIR/nginx_error.log 2>&1
+}
+
+function _php-fpm() {
+  php_context "php-fpm $*"
+}
+
+function _start_php() {
+  _php-fpm -D -y $OPENSHIFT_SPRESS_DIR/configuration/etc/php-fpm.conf >> $OPENSHIFT_SPRESS_LOG_DIR/php_error.log 2>&1
+}
+
+function _start_nginx() {
+  mkdir -p /tmp/nginx
+
+  if ! _nginx -p $OPENSHIFT_SPRESS_DIR -c $NGINX_CFG_FILE -g "error_log $OPENSHIFT_SPRESS_LOG_DIR/nginx_error.log;"; then
+      echo 1>&2
+      cat $OPENSHIFT_SPRESS_LOG_DIR/nginx_error.log 1>&2
+      return 1
+  fi
+}
+
+function start() {
+    echo "Starting $cartridge_type cart"
+
+    _start_spress
+
+    # build_nginx_config && build_phpfpm_config
+    # _start_php
+    # _start_nginx
+}
+
+function _stop_service() {
+  if [ -f "$1" ]; then
+      pid=`cat "$1" 2>/dev/null`
+  fi
+  if [ -n "$pid" ]; then
+      kill $pid
+      wait_for_stop $pid
+      if [ -f "$1" ]; then
+          rm -f "$1"
+      fi
+  fi
+}
+
+function _stop_spress() {
+  if isrunning; then
+    pid=$(ps -ef | grep "[s]press" | awk '{print $2}')
+    echo "Sending SIGTERM to spress:$pid ..." 1>&2
+    kill $pid
+  fi
+}
+
+function stop() {
+  echo "Stopping $cartridge_type cart"
+
+  _stop_spress
+
+  # _stop_service $NGINX_PID_FILE
+  # _stop_service $PHP_PID_FILE
+}
+
+function configtest() {
+  client_message "Testing Nginx configuration files..."
+  $OPENSHIFT_SPRESS_DIR/usr/sbin/nginx -c $NGINX_CFG_FILE -g "error_log stderr;" -t
+  client_message "Testing php-fpm configuration files..."
+  _php-fpm -F -y $OPENSHIFT_SPRESS_DIR/configuration/etc/php-fpm.conf --test
+
+  return $?
+}
+
+function status() {
+  if output=$(curl -I http://$OPENSHIFT_SPRESS_IP:$OPENSHIFT_SPRESS_PORT/ 2>&1 )
+  then
+    client_result "Application is running"
+  else
+    client_result "Application is either stopped or inaccessible"
+    client_result $output
+  fi
+}
+
+function tidy() {
+  client_message "Emptying log dir: $OPENSHIFT_SPRESS_LOG_DIR"
+  shopt -s dotglob
+  rm -rf $OPENSHIFT_SPRESS_LOG_DIR/*
+
+  return 0
+}
+
+function build() {
+  if [ -f "${OPENSHIFT_REPO_DIR}/.openshift/markers/force_clean_build" ]
+  then
+      echo ".openshift/markers/force_clean_build found!  Recreating pear libs" 1>&2
+      rm -rf "${OPENSHIFT_SPRESS_DIR}"/phplib/pear/*
+      mkdir -p "${OPENSHIFT_SPRESS_DIR}"/phplib/pear/{docs,ext,php,cache,cfg,data,download,temp,tests,www}
+  fi
+
+  if [ -f ${OPENSHIFT_REPO_DIR}deplist.txt ]
+  then
+      for f in $(cat ${OPENSHIFT_REPO_DIR}deplist.txt)
+      do
+        if ! php_context "pear info '$f' >/dev/null"; then
+            php_context "pear install --alldeps '$f'"
+          else
+            php_context "pear upgrade --alldeps '$f'" || :
+          fi
+          echo
+          # Remove gear-specific absolute paths from the generated PEAR
+          # files except from the hidden dirs/files (cache, registry etc.)
+          find ${OPENSHIFT_SPRESS_DIR}phplib/pear/pear/ -type f \( ! -regex '.*/\..*' \) \
+            -exec sed -i "s|${OPENSHIFT_HOMEDIR}|~/|g" {} \;
+      done
+  fi
+  return 0
+}
+
+case "$1" in
+  start)           start;;
+  stop)            stop;;
+  restart)         stop; start;;
+  status)          status;;
+  configtest)      configtest ;;
+  tidy)            tidy;;
+  build)           build;;
+  deploy)          exit 0;;
+  *)               exit 0
+esac
