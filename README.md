@@ -1,8 +1,10 @@
 # OpenShift Spress Cartridge
 
+This cartridge is using Spress 1.1.0 and PHP 5.4. 
+
 ## How to use this cartridge
 
-### using console tool
+### Using console tool
 * Installing the [OpenShift Client Tools](https://developers.openshift.com/en/managing-client-tools.html) (RHC)
 * Create a new application on OpenShift using this command:
 ``` bash
@@ -13,8 +15,10 @@ rhc app create spress http://spress.yosymfony.com/openshift-cartridge/manifest.y
 ## Modify your site
 
 * Clone the repository that is associated with your OpenShift gear to your local machine.
-The `www/` folder contains your Spress site.
-* Make your changes and send a pull to repository.
+* `cd /YOUR-REPOSITORY-FOLDER`
+* The `www/` folder contains your Spress site.
+* Make your changes and send a pull to repository. You do not need to upload your `_site`
+folder that is created by running Spress locally.
 * Your OpenShift gear will take care of building your site with your changes.
 
 ## License
