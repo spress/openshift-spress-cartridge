@@ -1,6 +1,6 @@
 # OpenShift Spress Cartridge
 
-This cartridge uses [Spress](http://spress.yosymfony.com) 1.1.0, PHP 5.4 and Spresso as default theme.
+This cartridge uses [Spress](http://spress.yosymfony.com) 1.1.1, PHP 5.4 and Spresso as default theme.
 
 ## How to use this cartridge
 
