@@ -1,14 +1,14 @@
 Name: spress
 Cartridge-Short-Name: SPRESS
-Display-Name: Spress PHP static site generator with built-in server
+Display-Name: "Spress PHP static site generator with built-in server"
 Description: "Transform your plain text into static websites and blogs."
-Version: '5.4'
+Version: '5.5'
 Versions: ['5.3', '5.4', '5.5']
 License: "MIT"
 License-Url: http://opensource.org/licenses/MIT
 Source-Url: https://github.com/spress/Openshift-spress-cartridge.git
-Vendor: 'Yo! Symfony'
-Cartridge-Version: 0.0.1
+Vendor: "Yo! Symfony"
+Cartridge-Version: 2.0.0
 Compatible-Versions: []
 Cartridge-Vendor: getup
 Categories:
@@ -49,7 +49,7 @@ Provides:
   - spress
   - nginx-1.0
   - "nginx"
-  - php-5.4
+  - php-5.5
   - "php"
 Publishes:
   get-php-ini:

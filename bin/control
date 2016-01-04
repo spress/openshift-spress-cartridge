@@ -14,7 +14,7 @@ PHP_PID_FILE=$OPENSHIFT_SPRESS_DIR/run/php-fpm.pid
 
 function isrunning() {
   # Check for running Spress
-  pid=$(ps -ef | grep "[s]press " | awk '{print $2}')
+  pid=$(ps -ef | grep "spress " | awk '{print $2}')
   if [ "$pid" != "" ]; then
     return 0
   else
@@ -75,7 +75,7 @@ function _stop_service() {
 
 function _stop_spress() {
   if isrunning; then
-    pid=$(ps -ef | grep "[s]press" | awk '{print $2}')
+    pid=$(ps -ef | grep "spress" | awk '{print $2}')
     echo "Sending SIGTERM to spress:$pid ..." 1>&2
     kill $pid
   fi

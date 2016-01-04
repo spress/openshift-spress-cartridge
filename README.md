@@ -1,12 +1,14 @@
 # OpenShift Spress Cartridge
 
-This cartridge uses [Spress](http://spress.yosymfony.com) 1.1.1, PHP 5.4 and Spresso as default theme.
+This cartridge uses [Spress](http://spress.yosymfony.com) 2.0.0, PHP 5.5 and Spresso as default theme.
 
 ## How to use this cartridge
 
 ### Using console tool
+
 * Installing the [OpenShift Client Tools](https://developers.openshift.com/en/managing-client-tools.html) (RHC).
 * Create a new application on OpenShift using this command:
+
 ``` bash
 rhc app create spress http://spress.yosymfony.com/openshift-cartridge/manifest.yml
 ```
